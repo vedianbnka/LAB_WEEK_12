@@ -32,13 +32,11 @@ class MainActivity : AppCompatActivity() {
 
         val movieRepository = (application as MovieApplication).movieRepository
         val movieViewModel = ViewModelProvider(
-            this,
-            object : ViewModelProvider.Factory {
+            this, object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return MovieViewModel(movieRepository) as T
                 }
-            }
-        )[MovieViewModel::class.java]
+            })[MovieViewModel::class.java]
 
         // fetch movies from the API
 // lifecycleScope is a lifecycle-aware coroutine scope
@@ -52,7 +50,10 @@ class MainActivity : AppCompatActivity() {
                 launch {
                     movieViewModel.popularMovies.collect { movies ->
                         // add the list of movies to the adapter
-                        movieAdapter.addMovies(movies)
+                        val currentYear = Calendar.getInstance().get(Calendar.YEAR).toString()
+                        movieAdapter.addMovies(movies.filter { movie ->
+                            movie.releaseDate?.startsWith(currentYear) == true
+                        }.sortedByDescending { it.popularity })
                     }
                 }
 
@@ -62,9 +63,7 @@ class MainActivity : AppCompatActivity() {
                         // if an error occurs, show a Snackbar with the error
                         if (error.isNotEmpty()) {
                             Snackbar.make(
-                                recyclerView,
-                                error,
-                                Snackbar.LENGTH_LONG
+                                recyclerView, error, Snackbar.LENGTH_LONG
                             ).show()
                         }
                     }
